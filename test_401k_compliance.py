@@ -2,6 +2,7 @@ class Employee(object):
     name = None
     percentage_min = None
     percentage_max = None
+    is_5_percent_owner = False
     is_key_employee = False
     key_employee_reason = None
     w2 = None
@@ -26,9 +27,18 @@ class Employee(object):
         self.percentage_min = round(100 * amount_min / self.w2)
         return self
 
-    def set_as_key_employee(self, reason=None):
-        self.key_employee_reason = reason
+    def set_as_5_percent_owner(self):
+        self.is_5_percent_owner = True
+        self.key_employee_reason = KeyEmployeeReasons.is_5_percent_owner
         self.is_key_employee = True
+        return self
+
+    def set_as_key_employee(self, reason=None):
+        if reason == KeyEmployeeReasons.is_5_percent_owner:
+            self.set_as_5_percent_owner()
+        else:
+            self.key_employee_reason = reason
+            self.is_key_employee = True
         return self
 
     def set_percentage(self, percentage_min, percentage_max=None):
@@ -37,12 +47,18 @@ class Employee(object):
         return self
 
 
+class KeyEmployeeReasons(object):
+    is_5_percent_owner = '5% owner'
+    is_1_percent_owner = '1% owner and W2 > $150,000'
+
+
 EMPLOYEES = [
     Employee('Person 1', 50000).set_amount(19000),
     Employee('Person 2', 50000).set_amount(10000, 19000),
     Employee('Person 3', 50000).set_percentage(5),
     Employee('Person 4', 50000).set_percentage(1, 10),
-    Employee('Person 5', 50000).set_percentage(5).set_as_key_employee(reason='5% owner'),
+    Employee('Person 5', 50000).set_percentage(5).set_as_key_employee(reason=KeyEmployeeReasons.is_5_percent_owner),
+    Employee('Person 6', 50000).set_percentage(50).set_as_5_percent_owner(),
 ]
 
 
@@ -188,7 +204,7 @@ def top_heavy_test(employees, conservative=True):
     )
 
 
-def _get_hce_and_nhce(employees, hce_w2=120000, top_paid_group_election=True):
+def _get_hce_and_nhce(employees, hce_w2=125000, top_paid_group_election=True):
     """
     Calculate who is classified as HCE or NHCE.
 
@@ -212,7 +228,7 @@ def _get_hce_and_nhce(employees, hce_w2=120000, top_paid_group_election=True):
         hce_list = []
         nhce_list = []
         for employee in employees:
-            if employee.is_key_employee or employee in sorted_employees[:number_of_hce]:
+            if employee.is_5_percent_owner or employee in sorted_employees[:number_of_hce]:
                 hce_list.append(employee)
             else:
                 nhce_list.append(employee)
